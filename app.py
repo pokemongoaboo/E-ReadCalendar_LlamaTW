@@ -40,20 +40,26 @@ def get_calendar_service():
     )
     return build('calendar', 'v3', credentials=creds)
 
+def format_time(dt):
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 try:
     service = get_calendar_service()
     st.success("成功创建日历服务")
 
-    # 使用 datetime.UTC 替代 utcnow()
-    now = datetime.datetime.now(datetime.UTC).isoformat() + 'Z'
-    seven_days_later = (datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=7)).isoformat() + 'Z'
+    # 使用更简单的时间格式
+    now = datetime.datetime.now(datetime.UTC)
+    seven_days_later = now + datetime.timedelta(days=7)
 
-    st.write(f"尝试获取从 {now} 到 {seven_days_later} 的事件")
+    now_str = format_time(now)
+    seven_days_later_str = format_time(seven_days_later)
+
+    st.write(f"尝试获取从 {now_str} 到 {seven_days_later_str} 的事件")
 
     events_result = service.events().list(
         calendarId=calendar_id,
-        timeMin=now,
-        timeMax=seven_days_later,
+        timeMin=now_str,
+        timeMax=seven_days_later_str,
         maxResults=10,
         singleEvents=True,
         orderBy='startTime'
@@ -91,3 +97,8 @@ st.markdown("""
 
 # 显示完整的日历 ID 用于验证
 st.write(f"当前使用的日历 ID: {calendar_id}")
+
+# 显示使用的时间范围
+st.write(f"查询的时间范围：")
+st.write(f"开始时间：{now_str}")
+st.write(f"结束时间：{seven_days_later_str}")
