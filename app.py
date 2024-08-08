@@ -44,9 +44,11 @@ try:
     service = get_calendar_service()
     st.success("成功创建日历服务")
 
-    # 获取当前时间和未来7天
-    now = datetime.datetime.utcnow().isoformat() + 'Z'
-    seven_days_later = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat() + 'Z'
+    # 使用 datetime.UTC 替代 utcnow()
+    now = datetime.datetime.now(datetime.UTC).isoformat() + 'Z'
+    seven_days_later = (datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=7)).isoformat() + 'Z'
+
+    st.write(f"尝试获取从 {now} 到 {seven_days_later} 的事件")
 
     events_result = service.events().list(
         calendarId=calendar_id,
@@ -68,16 +70,24 @@ try:
             st.write(f"{start}: {event['summary']}")
 
 except HttpError as error:
-    st.error(f"发生错误: {error}")
+    st.error(f"发生 HTTP 错误: {error}")
     st.error("请检查您的日历 ID 和权限设置。")
+    st.write("尝试以下步骤：")
+    st.write("1. 确认日历 ID 是否正确")
+    st.write("2. 检查服务账号是否有权限访问此日历")
+    st.write("3. 在 Google Calendar 设置中，确保已将服务账号添加为此日历的读取者")
 except Exception as e:
     st.error(f"发生未预期的错误: {e}")
 
 st.header("4. 故障排除提示")
 st.markdown("""
-如果您遇到问题：
+如果您仍然遇到问题：
 1. 确保 GOOGLE_APPLICATION_CREDENTIALS 包含完整的服务账号 JSON。
-2. 验证 GOOGLE_CALENDAR_ID 是正确的。
-3. 检查服务账号是否有权限访问指定的日历。
+2. 再次验证 GOOGLE_CALENDAR_ID 是正确的。可以尝试使用您的主日历 ID（通常是您的 Gmail 地址）进行测试。
+3. 在 Google Calendar 的共享设置中，确保已将服务账号（{creds_dict.get('client_email')}）添加为日历的读取者。
 4. 在 Google Cloud Console 中确保 Calendar API 已启用。
+5. 如果使用的是 Google Workspace 账号，确保管理员已授予相应的 API 访问权限。
 """)
+
+# 显示完整的日历 ID 用于验证
+st.write(f"当前使用的日历 ID: {calendar_id}")
