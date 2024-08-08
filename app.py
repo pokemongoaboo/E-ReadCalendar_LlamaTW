@@ -1,74 +1,83 @@
 import streamlit as st
-import datetime
+import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-import json
-from openai import OpenAI
+from googleapiclient.errors import HttpError
+import datetime
 
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# 设置页面标题
+st.set_page_config(page_title="Google Calendar API 测试")
 
-# Set up Google Calendar API
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+st.title("Google Calendar API 测试应用")
 
-@st.cache_resource
-def get_calendar_service():
+# 测试 GOOGLE_APPLICATION_CREDENTIALS
+st.header("1. 测试 Google 应用凭证")
+try:
     creds_dict = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
-    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    st.success("成功解析 GOOGLE_APPLICATION_CREDENTIALS")
+    st.write(f"项目 ID: {creds_dict.get('project_id')}")
+    st.write(f"客户端邮箱: {creds_dict.get('client_email')}")
+except json.JSONDecodeError:
+    st.error("GOOGLE_APPLICATION_CREDENTIALS 不是有效的 JSON")
+except KeyError:
+    st.error("GOOGLE_APPLICATION_CREDENTIALS 未在 Streamlit Secrets 中设置")
+
+# 测试 GOOGLE_CALENDAR_ID
+st.header("2. 测试日历 ID")
+calendar_id = st.secrets.get("GOOGLE_CALENDAR_ID")
+if calendar_id:
+    st.success(f"找到日历 ID: {calendar_id}")
+else:
+    st.error("GOOGLE_CALENDAR_ID 未在 Streamlit Secrets 中设置")
+
+# 尝试获取日历事件
+st.header("3. 尝试获取日历事件")
+
+def get_calendar_service():
+    creds = service_account.Credentials.from_service_account_info(
+        json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]),
+        scopes=['https://www.googleapis.com/auth/calendar.readonly']
+    )
     return build('calendar', 'v3', credentials=creds)
 
-def get_events(service, calendar_id, time_min, time_max):
-    events_result = service.events().list(calendarId=calendar_id, timeMin=time_min,
-                                          timeMax=time_max, singleEvents=True,
-                                          orderBy='startTime').execute()
-    return events_result.get('items', [])
-
-def generate_reminder(event):
-    prompt = f"基于以下事件生成一个温馨提醒: {event['summary']} 在 {event['start'].get('dateTime', event['start'].get('date'))}"
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "你是一个有助于生成友好提醒的AI助手。"},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content.strip()
-
-def main():
-    st.title("Google Calendar Event Viewer")
-
-    # 从 Streamlit secrets 获取日历ID
-    calendar_id = st.secrets["GOOGLE_CALENDAR_ID"]
-
+try:
     service = get_calendar_service()
+    st.success("成功创建日历服务")
 
-    option = st.selectbox(
-        "选择查看范围",
-        ("当前行事历 (今天和未来三天)", "当周行事历 (未来七天)", "当月行事历 (未来30天)")
-    )
-
+    # 获取当前时间和未来7天
     now = datetime.datetime.utcnow().isoformat() + 'Z'
-    if option == "当前行事历 (今天和未来三天)":
-        time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=3)).isoformat() + 'Z'
-    elif option == "当周行事历 (未来七天)":
-        time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat() + 'Z'
-    else:
-        time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).isoformat() + 'Z'
+    seven_days_later = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat() + 'Z'
 
-    events = get_events(service, calendar_id, now, time_max)
+    events_result = service.events().list(
+        calendarId=calendar_id,
+        timeMin=now,
+        timeMax=seven_days_later,
+        maxResults=10,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+
+    events = events_result.get('items', [])
 
     if not events:
-        st.write("没有找到事件。")
+        st.info("未来7天没有找到事件。")
     else:
+        st.success(f"成功获取事件！找到 {len(events)} 个事件。")
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
-            summary = event['summary']
-            st.write(f"{start}: {summary}")
+            st.write(f"{start}: {event['summary']}")
 
-            if any(keyword in summary for keyword in ["家人", "生日", "紀念日", "看診"]):
-                st.write("特别提醒!")
-                reminder = generate_reminder(event)
-                st.write(f"AI 提醒: {reminder}")
+except HttpError as error:
+    st.error(f"发生错误: {error}")
+    st.error("请检查您的日历 ID 和权限设置。")
+except Exception as e:
+    st.error(f"发生未预期的错误: {e}")
 
-if __name__ == '__main__':
-    main()
+st.header("4. 故障排除提示")
+st.markdown("""
+如果您遇到问题：
+1. 确保 GOOGLE_APPLICATION_CREDENTIALS 包含完整的服务账号 JSON。
+2. 验证 GOOGLE_CALENDAR_ID 是正确的。
+3. 检查服务账号是否有权限访问指定的日历。
+4. 在 Google Cloud Console 中确保 Calendar API 已启用。
+""")
