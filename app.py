@@ -26,9 +26,14 @@ except KeyError:
 st.header("2. 测试日历 ID")
 calendar_id = st.secrets.get("GOOGLE_CALENDAR_ID")
 if calendar_id:
-    st.success(f"找到日历 ID: {calendar_id}")
+    st.success(f"找到默认日历 ID: {calendar_id}")
 else:
     st.error("GOOGLE_CALENDAR_ID 未在 Streamlit Secrets 中设置")
+
+# 允许用户输入自定义日历 ID
+custom_calendar_id = st.text_input("输入自定义日历 ID（可选）:", value=calendar_id)
+if custom_calendar_id:
+    calendar_id = custom_calendar_id
 
 # 尝试获取日历事件
 st.header("3. 尝试获取日历事件")
@@ -56,6 +61,15 @@ try:
 
     st.write(f"尝试获取从 {now_str} 到 {seven_days_later_str} 的事件")
 
+    # 首先尝试获取日历元数据
+    try:
+        calendar_metadata = service.calendars().get(calendarId=calendar_id).execute()
+        st.success(f"成功获取日历元数据。日历标题: {calendar_metadata.get('summary')}")
+    except HttpError as error:
+        st.error(f"获取日历元数据时发生错误: {error}")
+        st.error("这可能意味着日历不存在或服务账号没有访问权限。")
+        raise
+
     events_result = service.events().list(
         calendarId=calendar_id,
         timeMin=now_str,
@@ -82,17 +96,19 @@ except HttpError as error:
     st.write("1. 确认日历 ID 是否正确")
     st.write("2. 检查服务账号是否有权限访问此日历")
     st.write("3. 在 Google Calendar 设置中，确保已将服务账号添加为此日历的读取者")
+    st.write(f"4. 尝试使用您的个人 Gmail 地址作为日历 ID")
 except Exception as e:
     st.error(f"发生未预期的错误: {e}")
 
 st.header("4. 故障排除提示")
-st.markdown("""
+st.markdown(f"""
 如果您仍然遇到问题：
 1. 确保 GOOGLE_APPLICATION_CREDENTIALS 包含完整的服务账号 JSON。
 2. 再次验证 GOOGLE_CALENDAR_ID 是正确的。可以尝试使用您的主日历 ID（通常是您的 Gmail 地址）进行测试。
 3. 在 Google Calendar 的共享设置中，确保已将服务账号（{creds_dict.get('client_email')}）添加为日历的读取者。
 4. 在 Google Cloud Console 中确保 Calendar API 已启用。
 5. 如果使用的是 Google Workspace 账号，确保管理员已授予相应的 API 访问权限。
+6. 检查服务账号是否有正确的域范围权限（如果适用）。
 """)
 
 # 显示完整的日历 ID 用于验证
