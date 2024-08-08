@@ -70,33 +70,29 @@ def main():
     if not events:
         st.write("沒有找到事件。")
     else:
-        events_data = []
         for event in events:
             event_time = format_event_time(event)
             summary = event['summary']
             description = event.get('description', '無描述')
             location = event.get('location', '無地點')
             
-            reminder = ""
+            # 使用 Streamlit 的列來創建表格式的布局
+            col1, col2, col3, col4 = st.columns([2, 3, 3, 2])
+            with col1:
+                st.write(f"**時間:**\n{event_time}")
+            with col2:
+                st.write(f"**摘要:**\n{summary}")
+            with col3:
+                st.write(f"**描述:**\n{description}")
+            with col4:
+                st.write(f"**地點:**\n{location}")
+            
             if any(keyword in summary for keyword in ["家人", "生日", "紀念日", "看診"]):
                 reminder = generate_reminder(event)
+                # 使用 st.info 來以不同的顏色顯示 AI 提醒
+                st.info(f"**AI 提醒:** {reminder}")
             
-            events_data.append({
-                "時間": event_time,
-                "摘要": summary,
-                "描述": description,
-                "地點": location,
-                "AI提醒": reminder
-            })
-        
-        df = pd.DataFrame(events_data)
-        st.table(df)
-        
-        for event in events_data:
-            if event['AI提醒']:
-                st.write("---")
-                st.write(f"**特別提醒 - {event['摘要']}**")
-                st.write(f"AI 提醒: {event['AI提醒']}")
+            st.write("---")  # 添加分隔線
 
 if __name__ == '__main__':
     main()
