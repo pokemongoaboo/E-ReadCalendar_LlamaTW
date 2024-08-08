@@ -87,7 +87,7 @@ def main():
             with col4:
                 st.write(f"**地點:**\n{location}")
             
-            if any(keyword in summary for keyword in ["家人", "生日", "紀念日", "看診"]):
+            if any(keyword in summary for keyword in ["家人", "生日", "紀念日", "回診"]):
                 reminder = generate_reminder(event)
                 # 使用 st.info 來以不同的顏色顯示 AI 提醒
                 st.info(f"**AI 提醒:** {reminder}")
