@@ -46,7 +46,7 @@ def format_event_time(event):
         return f"{start} (全天)"
 
 def main():
-    st.title("Google 日曆事件檢視器")
+    st.title("Google 日曆事件檢視器(Calendar Viewer)")
     
     # 從 Streamlit secrets 獲取日曆ID
     calendar_id = st.secrets["GOOGLE_CALENDAR_ID"]
@@ -54,13 +54,13 @@ def main():
     
     option = st.selectbox(
         "選擇查看範圍",
-        ("當前行事曆 (今天和未來三天)", "當週行事曆 (未來七天)", "當月行事曆 (未來30天)")
+        ("當前行事曆 (Current-3 Days)", "當週行事曆 (Week-Future 7 Days)", "當月行事曆 (Month-Future 30 Days)")
     )
     
     now = datetime.datetime.utcnow().isoformat() + 'Z'
-    if option == "當前行事曆 (今天和未來三天)":
+    if option == "當前行事曆 (Current-3 Days)":
         time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=3)).isoformat() + 'Z'
-    elif option == "當週行事曆 (未來七天)":
+    elif option == "當週行事曆 (Week-Future 7 Days)":
         time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat() + 'Z'
     else:
         time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).isoformat() + 'Z'
@@ -68,29 +68,29 @@ def main():
     events = get_events(service, calendar_id, now, time_max)
     
     if not events:
-        st.write("沒有找到事件。")
+        st.write("沒有找到事件(No events)。")
     else:
         for event in events:
             event_time = format_event_time(event)
             summary = event['summary']
-            description = event.get('description', '無描述')
-            location = event.get('location', '無地點')
+            description = event.get('description', '無描述(no descrition)')
+            location = event.get('location', '無地點(no locaiton)')
             
             # 使用 Streamlit 的列來創建表格式的布局
             col1, col2, col3, col4 = st.columns([2, 3, 3, 2])
             with col1:
-                st.write(f"**時間:**\n{event_time}")
+                st.write(f"**時間(Time):**\n{event_time}")
             with col2:
-                st.write(f"**摘要:**\n{summary}")
+                st.write(f"**摘要(Summary):**\n{summary}")
             with col3:
-                st.write(f"**描述:**\n{description}")
+                st.write(f"**描述(Descrition):**\n{description}")
             with col4:
-                st.write(f"**地點:**\n{location}")
+                st.write(f"**地點(Location):**\n{location}")
             
             if any(keyword in summary for keyword in ["家人", "生日", "紀念日", "預約回診"]):
                 reminder = generate_reminder(event)
                 # 使用 st.info 來以不同的顏色顯示 AI 提醒
-                st.info(f"**AI 提醒:** {reminder}")
+                st.info(f"**AI 提醒(Reminder):** {reminder}")
             
             st.write("---")  # 添加分隔線
 
