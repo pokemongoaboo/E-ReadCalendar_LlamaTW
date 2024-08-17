@@ -46,7 +46,18 @@ def format_event_time(event):
         return f"{start} (全天)"
 
 def main():
-    st.title("Google 日曆事件檢視器(Calendar Viewer)")
+    #st.title("Google 日曆事件檢視器(Calendar Viewer)")
+
+
+    # 使用 markdown 來創建置中的兩行標題
+    st.markdown("""
+    <h1 style="text-align: center;">Google 日曆事件檢視器</h1>
+    <h2 style="text-align: center;">(Calendar Viewer)</h2>
+    """, unsafe_allow_html=True)
+
+    # 添加一些間距
+    st.markdown("<br>", unsafe_allow_html=True)
+
     
     # 從 Streamlit secrets 獲取日曆ID
     calendar_id = st.secrets["GOOGLE_CALENDAR_ID"]
