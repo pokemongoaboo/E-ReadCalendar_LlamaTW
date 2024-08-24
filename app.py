@@ -38,7 +38,7 @@ def generate_reminder(event):
         temperature=0.5,
         top_p=1,
         max_tokens=1024
-        #stream=True
+        stream=True
     )
     #response-word ="";
     
