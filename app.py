@@ -46,7 +46,7 @@ def generate_reminder(event):
     #    if chunk.choices[0].delta.content is not None:
     #        response-word = response-word + (chunk.choices[0].delta.content, end="")
             
-    return completion
+    return completion.choices[0].message.content.strip()
     #return response.choices[0].message.content.strip()
 
 def format_event_time(event):
