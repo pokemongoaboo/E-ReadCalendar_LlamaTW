@@ -40,12 +40,12 @@ def generate_reminder(event):
         max_tokens=1024,
         stream=True
     )
-    reponse-word ="";
+    response-word ="";
     for chunk in completion:
         if chunk.choices[0].delta.content is not None:
-            reponse-word = reponse-word + (chunk.choices[0].delta.content, end="")
+            reponse-word = response-word + (chunk.choices[0].delta.content, end="")
             
-    return response
+    return response-word
     #return response.choices[0].message.content.strip()
 
 def format_event_time(event):
