@@ -32,7 +32,7 @@ def generate_reminder(event):
     response = openai_client.chat.completions.create(
         model="yentinglin/llama-3-taiwan-70b-instruct",
         messages=[
-            {"role": "system", "content": "你是一個有助於生成友善提醒的AI助手。"},
+            {"role": "system", "content": "你是一個有助於生成友善提醒的AI助手。提醒建議的內容請重複用中文及英文分段表示"},
             {"role": "user", "content": prompt}],
         temperature=0.5,
         top_p=1,
