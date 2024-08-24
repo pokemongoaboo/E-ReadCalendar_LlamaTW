@@ -37,16 +37,16 @@ def generate_reminder(event):
             {"role": "user", "content": prompt}],
         temperature=0.5,
         top_p=1,
-        max_tokens=1024,
-        stream=True
+        max_tokens=1024
+        #stream=True
     )
     #response-word ="";
     
-    for chunk in completion:
-        if chunk.choices[0].delta.content is not None:
-            response-word = response-word + (chunk.choices[0].delta.content, end="")
+    #for chunk in completion:
+    #    if chunk.choices[0].delta.content is not None:
+    #        response-word = response-word + (chunk.choices[0].delta.content, end="")
             
-    return response-word
+    return completion
     #return response.choices[0].message.content.strip()
 
 def format_event_time(event):
