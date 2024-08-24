@@ -29,25 +29,14 @@ def get_events(service, calendar_id, time_min, time_max):
 
 def generate_reminder(event):
     prompt = f"基於以下事件生成一個溫馨提醒: {event['summary']} 在 {event['start'].get('dateTime', event['start'].get('date'))}"
-    # response = openai_client.chat.completions.create(
-    completion = openai_client.chat.completions.create(
+    response = openai_client.chat.completions.create(
         model="yentinglin/llama-3-taiwan-70b-instruct",
         messages=[
             {"role": "system", "content": "你是一個有助於生成友善提醒的AI助手。"},
-            {"role": "user", "content": prompt}],
-        temperature=0.5,
-        top_p=1,
-        max_tokens=1024,
-        stream=True
+            {"role": "user", "content": prompt}]
     )
-    #response-word ="";
-    
-    #for chunk in completion:
-    #    if chunk.choices[0].delta.content is not None:
-    #        response-word = response-word + (chunk.choices[0].delta.content, end="")
             
-    return completion.choices[0].message.content.strip()
-    #return response.choices[0].message.content.strip()
+    return response.choices[0].message.content.strip()
 
 def format_event_time(event):
     start = event['start'].get('dateTime', event['start'].get('date'))
