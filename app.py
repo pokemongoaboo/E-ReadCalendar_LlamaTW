@@ -33,11 +33,7 @@ def generate_reminder(event):
         model="yentinglin/llama-3-taiwan-70b-instruct",
         messages=[
             {"role": "system", "content": "你是一個有助於生成友善提醒的AI助手。"},
-            {"role": "user", "content": prompt}],
-        temperature=0.5,
-        top_p=1,
-        max_tokens=1024,
-        stream=True
+            {"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content.strip()
 
