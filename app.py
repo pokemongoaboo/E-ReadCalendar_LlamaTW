@@ -7,7 +7,10 @@ from openai import OpenAI
 import pandas as pd
 
 # 初始化 OpenAI 客戶端
-openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+openai_client = OpenAI(
+    base_url = "https://integrate.api.nvidia.com/v1",
+    api_key=st.secrets["OPENAI_API_KEY"]
+)
 
 # 設置 Google 日曆 API
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -27,11 +30,14 @@ def get_events(service, calendar_id, time_min, time_max):
 def generate_reminder(event):
     prompt = f"基於以下事件生成一個溫馨提醒: {event['summary']} 在 {event['start'].get('dateTime', event['start'].get('date'))}"
     response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="yentinglin/llama-3-taiwan-70b-instruct",
         messages=[
             {"role": "system", "content": "你是一個有助於生成友善提醒的AI助手。"},
-            {"role": "user", "content": prompt}
-        ]
+            {"role": "user", "content": prompt}],
+        temperature=0.5,
+        top_p=1,
+        max_tokens=1024,
+        stream=True
     )
     return response.choices[0].message.content.strip()
 
